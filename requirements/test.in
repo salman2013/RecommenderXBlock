@@ -3,4 +3,6 @@
 
 -r base.txt               # Core dependencies for the cookiecutter
 
+pytest
 pycodestyle
+xblock-sdk
