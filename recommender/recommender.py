@@ -38,6 +38,7 @@ except ImportError:
         of which does not support event emission). This should be replaced with XBlock's
         emit(), but at present, emit() is broken.
         """
+
         def __init__(self):
             """ Do nothing """
             pass
@@ -85,6 +86,7 @@ template_lookup = None
 
 class HelperXBlock(XBlock):
     ''' Generic functionality usable across XBlocks but not yet in the platform '''
+
     def get_user_is_staff(self):
         """
         Return self.xmodule_runtime.user_is_staff
@@ -261,7 +263,8 @@ class RecommenderXBlock(HelperXBlock):
     )
 
     # The file system we used to store uploaded screenshots
-    fs = Filesystem(help="File system for screenshots", scope=Scope.user_state_summary)
+    fs = Filesystem(help="File system for screenshots",
+                    scope=Scope.user_state_summary)
 
     client_configuration = Dict(
         help="Dict of customizable settings",
@@ -318,7 +321,8 @@ class RecommenderXBlock(HelperXBlock):
         """
         # check url for redundancy
         if resource_id in self.recommendations:
-            result['error'] = self.ugettext('The resource you are attempting to provide already exists')
+            result['error'] = self.ugettext(
+                'The resource you are attempting to provide already exists')
             for field in self.resource_content_fields:
                 result['dup_' + field] = self.recommendations[resource_id][field]
             result['dup_id'] = self.recommendations[resource_id]['id']
@@ -377,7 +381,8 @@ class RecommenderXBlock(HelperXBlock):
                     # Check magic number
                     headers = file_types[file_type]['magic']
                     file_pointer = request.POST['file'].file
-                    file_magic_number = file_pointer.read(int(len(headers[0]) / 2))
+                    file_magic_number = file_pointer.read(
+                        int(len(headers[0]) / 2))
 
                     if codecs.encode(file_magic_number, 'hex').decode('utf-8') not in headers:
                         file_type_error = True
@@ -387,7 +392,8 @@ class RecommenderXBlock(HelperXBlock):
             response = Response()
             tracker.emit(event, {'uploadedFileName': 'FILE_TYPE_ERROR'})
             response.status = 415
-            response.body = json.dumps({'error': file_type_error_msg}).encode('utf-8')
+            response.body = json.dumps(
+                {'error': file_type_error_msg}).encode('utf-8')
             response.headers['Content-Type'] = 'application/json'
             return response
 
@@ -396,7 +402,8 @@ class RecommenderXBlock(HelperXBlock):
             response = Response()
             tracker.emit(event, {'uploadedFileName': 'FILE_SIZE_ERROR'})
             response.status = 413
-            response.body = json.dumps({'error': self.ugettext('Size of uploaded file exceeds threshold')}).encode('utf-8')
+            response.body = json.dumps({'error': self.ugettext(
+                'Size of uploaded file exceeds threshold')}).encode('utf-8')
             response.headers['Content-Type'] = 'application/json'
             return response
 
@@ -585,7 +592,8 @@ class RecommenderXBlock(HelperXBlock):
             return self._raise_pyfs_error('upload_screenshot')
 
         response = Response()
-        response.body = json.dumps({'file_name': str("fs://" + file_name)}).encode('utf-8')
+        response.body = json.dumps(
+            {'file_name': str("fs://" + file_name)}).encode('utf-8')
         response.headers['Content-Type'] = 'application/json'
         tracker.emit('upload_screenshot',
                      {'uploadedFileName': response.body})
@@ -650,7 +658,8 @@ class RecommenderXBlock(HelperXBlock):
         result['old_id'] = resource_id
 
         for field in self.resource_content_fields:
-            old_recommendation_field_data = strip_and_clean_html_elements(self.recommendations[resource_id][field])
+            old_recommendation_field_data = strip_and_clean_html_elements(
+                self.recommendations[resource_id][field])
             result['old_' + field] = old_recommendation_field_data
             # If the content in resource is unchanged (i.e., data[field] is
             # empty), return and log the content stored in the database
@@ -667,10 +676,13 @@ class RecommenderXBlock(HelperXBlock):
         edited_resource_id = result['url']
         if edited_resource_id != resource_id:
             self._check_location_input(result['url'], 'add_resource', result)
-            self._check_redundant_resource(edited_resource_id, 'edit_resource', result)
-            self._check_removed_resource(edited_resource_id, 'edit_resource', result)
+            self._check_redundant_resource(
+                edited_resource_id, 'edit_resource', result)
+            self._check_removed_resource(
+                edited_resource_id, 'edit_resource', result)
 
-            self.recommendations[edited_resource_id] = deepcopy(self.recommendations[resource_id])
+            self.recommendations[edited_resource_id] = deepcopy(
+                self.recommendations[resource_id])
             self.recommendations[edited_resource_id]['id'] = edited_resource_id
             result['id'] = edited_resource_id
             del self.recommendations[resource_id]
@@ -730,7 +742,8 @@ class RecommenderXBlock(HelperXBlock):
 
                 if user_id not in self.flagged_accum_resources:
                     self.flagged_accum_resources[user_id] = {}
-            self.flagged_accum_resources[user_id][data['id']] = clean_data_reason
+            self.flagged_accum_resources[user_id][data['id']
+                                                  ] = clean_data_reason
         # Unflag resource. Currently unsupported.
         else:
             if data['id'] in self.flagged_ids:
@@ -773,7 +786,8 @@ class RecommenderXBlock(HelperXBlock):
         # Unendorse previously endorsed resource
         if resource_id in self.endorsed_recommendation_ids:
             result['status'] = 'undo endorsement'
-            endorsed_index = self.endorsed_recommendation_ids.index(resource_id)
+            endorsed_index = self.endorsed_recommendation_ids.index(
+                resource_id)
             del self.endorsed_recommendation_ids[endorsed_index]
             del self.endorsed_recommendation_reasons[endorsed_index]
         # Endorse new resource
@@ -806,7 +820,8 @@ class RecommenderXBlock(HelperXBlock):
         """
         # Auth+auth
         if not self.get_user_is_staff():
-            msg = self.ugettext("You don't have the permission to remove this resource")
+            msg = self.ugettext(
+                "You don't have the permission to remove this resource")
             self._error_handler(msg, 'remove_resource')
 
         resource_id = self._validate_resource(data['id'], 'remove_resource')
@@ -816,7 +831,8 @@ class RecommenderXBlock(HelperXBlock):
         result = {}
         result['id'] = resource_id
         removed_resource = deepcopy(self.recommendations[resource_id])
-        removed_resource['reason'] = strip_and_clean_html_elements(data['reason'])
+        removed_resource['reason'] = strip_and_clean_html_elements(
+            data['reason'])
 
         # Add it to removed resources and remove it from main resource list.
         self.removed_recommendations[resource_id] = removed_resource
@@ -857,7 +873,8 @@ class RecommenderXBlock(HelperXBlock):
         response.headers['Content-Type'] = 'application/json'
         if not self.get_user_is_staff():
             response.status = 403
-            response.body = json.dumps({'error': self.ugettext('Only staff can import resources')}).encode('utf-8')
+            response.body = json.dumps({'error': self.ugettext(
+                'Only staff can import resources')}).encode('utf-8')
             tracker.emit('import_resources', {'Status': 'NOT_A_STAFF'})
             return response
 
@@ -868,7 +885,8 @@ class RecommenderXBlock(HelperXBlock):
                 'mimetypes': ['application/json', 'text/json', 'text/x-json']
             }
         }
-        file_type_error_msg = self.ugettext('Please submit the JSON file obtained with the download resources button')
+        file_type_error_msg = self.ugettext(
+            'Please submit the JSON file obtained with the download resources button')
         result = self._check_upload_file(
             request, file_types, file_type_error_msg, 'import_resources', 31457280
         )
@@ -883,19 +901,23 @@ class RecommenderXBlock(HelperXBlock):
             self.endorsed_recommendation_ids = data['endorsed_recommendation_ids']
 
             if 'removed_recommendations' in data:
-                self.removed_recommendations = data_structure_upgrade(data['removed_recommendations'])
+                self.removed_recommendations = data_structure_upgrade(
+                    data['removed_recommendations'])
                 data['removed_recommendations'] = self.removed_recommendations
-            self.recommendations = data_structure_upgrade(data['recommendations'])
+            self.recommendations = data_structure_upgrade(
+                data['recommendations'])
             data['recommendations'] = self.recommendations
 
-            tracker.emit('import_resources', {'Status': 'SUCCESS', 'data': data})
+            tracker.emit('import_resources', {
+                         'Status': 'SUCCESS', 'data': data})
             response.body = json.dumps(data, sort_keys=True).encode('utf-8')
             response.status = 200
             return response
         except (ValueError, KeyError):
             response.status = 415
             response.body = json.dumps(
-                {'error': self.ugettext('Please submit the JSON file obtained with the download resources button')}
+                {'error': self.ugettext(
+                    'Please submit the JSON file obtained with the download resources button')}
             ).encode('utf-8')
             tracker.emit('import_resources', {'Status': 'FILE_FORMAT_ERROR'})
             return response
@@ -908,7 +930,8 @@ class RecommenderXBlock(HelperXBlock):
         Accumulate the flagged resource ids and reasons from all students
         """
         if not self.get_user_is_staff():
-            msg = self.ugettext('Tried to access flagged resources without staff permission')
+            msg = self.ugettext(
+                'Tried to access flagged resources without staff permission')
             self._error_handler(msg, 'accum_flagged_resource')
         result = {
             'flagged_resources': {}
@@ -920,7 +943,8 @@ class RecommenderXBlock(HelperXBlock):
                 if resource_id not in result['flagged_resources']:
                     result['flagged_resources'][resource_id] = []
                 if flagged_accum_resource_map[resource_id] != '':
-                    result['flagged_resources'][resource_id].append(flagged_accum_resource_map[resource_id])
+                    result['flagged_resources'][resource_id].append(
+                        flagged_accum_resource_map[resource_id])
 
         tracker.emit('accum_flagged_resource', result)
         return result
@@ -958,14 +982,14 @@ class RecommenderXBlock(HelperXBlock):
         # issue. If students make substantially more resources, we may want
         # to paginate, and generate in sets of 5-20 URLs per load.
         resources = [{
-                      'id': strip_and_clean_html_elements(r['id']),
-                      'title': strip_and_clean_html_elements(r['title']),
-                      "votes": strip_and_clean_html_elements(r['upvotes'] - r['downvotes']),
-                      'url': strip_and_clean_url(r['url']),
-                      'description': self._get_onetime_url(strip_and_clean_html_elements(r['description'])),
-                      'descriptionText': strip_and_clean_html_elements(r['descriptionText'])
-                      }
-                     for r in self.recommendations.values()]
+            'id': strip_and_clean_html_elements(r['id']),
+            'title': strip_and_clean_html_elements(r['title']),
+            "votes": strip_and_clean_html_elements(r['upvotes'] - r['downvotes']),
+            'url': strip_and_clean_url(r['url']),
+            'description': self._get_onetime_url(strip_and_clean_html_elements(r['description'])),
+            'descriptionText': strip_and_clean_html_elements(r['descriptionText'])
+        }
+            for r in self.recommendations.values()]
         resources = sorted(resources, key=lambda r: r['votes'], reverse=True)
 
         frag = Fragment(
@@ -979,17 +1003,24 @@ class RecommenderXBlock(HelperXBlock):
                 flagged_reasons=self.flagged_reasons
             )
         )
-        frag.add_css_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
-        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
-        frag.add_javascript_url('//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js')
-        frag.add_javascript_url('//cdnjs.cloudflare.com/ajax/libs/intro.js/0.5.0/intro.min.js')
+        frag.add_css_url(
+            "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css")
+        frag.add_javascript_url(
+            "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
+        frag.add_javascript_url(
+            '//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js')
+        frag.add_javascript_url(
+            '//cdnjs.cloudflare.com/ajax/libs/intro.js/0.5.0/intro.min.js')
         frag.add_css(self.resource_string("static/css/tooltipster.css"))
         frag.add_css(self.resource_string("static/css/recommender.css"))
         frag.add_css(self.resource_string("static/css/introjs.css"))
-        frag.add_javascript(self.resource_string("static/js/src/jquery.tooltipster.min.js"))
+        frag.add_javascript(self.resource_string(
+            "static/js/src/jquery.tooltipster.min.js"))
         frag.add_javascript(self.resource_string("static/js/src/cats.js"))
-        frag.add_javascript(self.resource_string("static/js/src/recommender.js"))
-        frag.initialize_js('RecommenderXBlock', self.get_client_configuration())
+        frag.add_javascript(self.resource_string(
+            "static/js/src/recommender.js"))
+        frag.initialize_js('RecommenderXBlock',
+                           self.get_client_configuration())
         return frag
 
     def studio_view(self, _context=None):  # pylint: disable=unused-argument
@@ -1001,9 +1032,11 @@ class RecommenderXBlock(HelperXBlock):
         if not template_lookup:
             self._init_template_lookup()
 
-        frag = Fragment(template_lookup.get_template("recommenderstudio.html").render())
+        frag = Fragment(template_lookup.get_template(
+            "recommenderstudio.html").render())
         frag.add_css(load("static/css/recommenderstudio.css"))
-        frag.add_javascript_url("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
+        frag.add_javascript_url(
+            "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js")
         frag.add_javascript(load("static/js/src/recommenderstudio.js"))
         frag.initialize_js('RecommenderXBlock')
         return frag
@@ -1015,8 +1048,10 @@ class RecommenderXBlock(HelperXBlock):
         node.tag = 'recommender'
 
         node.set('intro_enabled', 'true' if (self.intro_enabled) else 'false')
-        node.set('disable_dev_ux', 'true' if (self.client_configuration['disable_dev_ux']) else 'false')
-        node.set('entries_per_page', str(self.client_configuration['entries_per_page']))
+        node.set('disable_dev_ux', 'true' if (
+            self.client_configuration['disable_dev_ux']) else 'false')
+        node.set('entries_per_page', str(
+            self.client_configuration['entries_per_page']))
         node.set('page_span', str(self.client_configuration['page_span']))
 
         el = etree.SubElement(node, 'resources')
@@ -1062,13 +1097,16 @@ class RecommenderXBlock(HelperXBlock):
         """
         block = runtime.construct_xblock_from_class(cls, keys)
         if node.tag != 'recommender':
-            raise UpdateFromXmlError("XML content must contain an 'recommender' root element.")
+            raise UpdateFromXmlError(
+                "XML content must contain an 'recommender' root element.")
 
         if node.get('intro_enabled'):
-            block.intro_enabled = (node.get('intro_enabled').lower().strip() not in ['false', '0', ''])
+            block.intro_enabled = (
+                node.get('intro_enabled').lower().strip() not in ['false', '0', ''])
 
         if node.get('disable_dev_ux'):
-            block.client_configuration['disable_dev_ux'] = (node.get('disable_dev_ux').lower().strip() not in ['false', '0', ''])
+            block.client_configuration['disable_dev_ux'] = (
+                node.get('disable_dev_ux').lower().strip() not in ['false', '0', ''])
 
         for tag in ['entries_per_page', 'page_span']:
             if node.get(tag):
@@ -1109,7 +1147,8 @@ def strip_and_clean_url(data):
     bleach_url = bleach.linkify(clean_url)
     if bleach_url.startswith(u'<a'):
         # The regex pulls out the href value of the generated <a>
-        href_url = re.search('href=\"(?P<href>.*?)\"', bleach_url).group('href')
+        href_url = re.search('href=\"(?P<href>.*?)\"',
+                             bleach_url).group('href')
         if href_url == clean_url:
             return href_url
 
